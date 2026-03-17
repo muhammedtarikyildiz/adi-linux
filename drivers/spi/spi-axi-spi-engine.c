@@ -836,6 +836,15 @@ static int spi_engine_transfer_one_message(struct spi_controller *host,
 
 	reinit_completion(&spi_engine->msg_complete);
 
+	/* Drain stale data from SDI FIFO before starting new transfer */
+	{
+		unsigned int n = readl_relaxed(spi_engine->base +
+					       SPI_ENGINE_REG_SDI_FIFO_LEVEL);
+		while (n--)
+			readl_relaxed(spi_engine->base +
+				      SPI_ENGINE_REG_SDI_DATA_FIFO);
+	}
+
 	if (trace_spi_transfer_start_enabled()) {
 		struct spi_transfer *xfer;
 
